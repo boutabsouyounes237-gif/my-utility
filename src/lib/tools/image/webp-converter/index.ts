@@ -1,0 +1,1 @@
+export { processWebpConverter } from "./webpconverter";

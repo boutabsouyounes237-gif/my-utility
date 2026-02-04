@@ -1,0 +1,1 @@
+export { processWatermark } from "./watermark";
