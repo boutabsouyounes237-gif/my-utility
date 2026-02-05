@@ -1,56 +1,41 @@
-import { UploadedFile } from "@/components/FileUploader";
-import { jsPDF } from "jspdf";
+import { PDFDocument } from "pdf-lib";
 
-/**
- * تحويل مجموعة صور إلى PDF
- */
-export async function processImageToPdf(
-  files: UploadedFile[],
-  maxFiles = 10
-): Promise<UploadedFile> {
-  if (files.length === 0) throw new Error("No images selected.");
-  if (files.length > maxFiles)
-    throw new Error(`Maximum ${maxFiles} images allowed.`);
+export type UploadedFile = {
+  data: File;
+  name: string;
+  url?: string;
+};
 
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
+export async function imagesToPdf(files: UploadedFile[]): Promise<UploadedFile> {
+  const pdfDoc = await PDFDocument.create();
 
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
+  for (const file of files) {
+    const arrayBuffer = await file.data.arrayBuffer();
+    const imageType = file.name.endsWith(".png") ? "png" : "jpeg";
 
-    // تحويل الصورة إلى Data URL (Base64)
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file.data);
-    });
+    let pdfImage;
+    if (imageType === "png") {
+      pdfImage = await pdfDoc.embedPng(arrayBuffer);
+    } else {
+      pdfImage = await pdfDoc.embedJpg(arrayBuffer);
+    }
 
-    // إنشاء صورة مؤقتة لتحصل على أبعادها
-    const img = new Image();
-    img.src = dataUrl;
-    await new Promise<void>((resolve) => {
-      img.onload = () => {
-        const pageW = doc.internal.pageSize.getWidth();
-        const pageH = doc.internal.pageSize.getHeight();
-
-        const ratio = Math.min(pageW / img.width, pageH / img.height);
-        const w = img.width * ratio;
-        const h = img.height * ratio;
-        const x = (pageW - w) / 2;
-        const y = (pageH - h) / 2;
-
-        if (i > 0) doc.addPage();
-        doc.addImage(dataUrl, "JPEG", x, y, w, h);
-
-        resolve();
-      };
+    const page = pdfDoc.addPage([pdfImage.width, pdfImage.height]);
+    page.drawImage(pdfImage, {
+      x: 0,
+      y: 0,
+      width: pdfImage.width,
+      height: pdfImage.height,
     });
   }
 
-  const blob = doc.output("blob");
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+
   return {
-    url: URL.createObjectURL(blob),
-    name: "images-to-pdf.pdf",
     data: new File([blob], "images-to-pdf.pdf", { type: "application/pdf" }),
+    name: "images-to-pdf.pdf",
+    url,
   };
 }

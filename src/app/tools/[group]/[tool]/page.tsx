@@ -3,30 +3,34 @@ import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import FileUploader, { UploadedFile } from "@/components/FileUploader";
 import { processImageToPdf } from "@/lib/tools/image/image-to-pdf";
-import { Loader2, CheckCircle2, RefreshCw, Download, ArrowLeft } from "lucide-react";
+// @ts-ignore
 import confetti from "canvas-confetti";
+import {
+  Download,
+  CheckCircle2,
+  RefreshCw,
+  Loader2,
+  ArrowLeft,
+} from "lucide-react";
 
-export default function SingleToolPage() {
+export default function ImageToPdfPage() {
   const params = useParams();
   const router = useRouter();
   const group = params.group as string;
-  const tool = params.tool as string;
 
-  const [resultFiles, setResultFiles] = useState<UploadedFile[]>([]);
+  const [resultFile, setResultFile] = useState<UploadedFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [uploaderKey, setUploaderKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [uploaderKey, setUploaderKey] = useState(0);
 
-  const handleStartProcessing = async (files: UploadedFile[]) => {
+  const handleProcess = async (files: UploadedFile[]) => {
     setIsProcessing(true);
     setError(null);
 
     try {
-      if (tool === "image-to-pdf") {
-        const result = await processImageToPdf(files, 10);
-        setResultFiles([result]);
-        confetti({ particleCount: 120, spread: 70 });
-      }
+      const pdf = await processImageToPdf(files, 10); // الحد الأقصى 10 صور
+      setResultFile(pdf);
+      confetti({ particleCount: 120, spread: 70 });
     } catch (e: any) {
       setError(e.message || "Processing failed.");
     } finally {
@@ -35,8 +39,9 @@ export default function SingleToolPage() {
   };
 
   const resetAll = () => {
-    setResultFiles([]);
+    setResultFile(null);
     setUploaderKey((p) => p + 1);
+    setError(null);
   };
 
   return (
@@ -52,18 +57,20 @@ export default function SingleToolPage() {
 
       <div className="text-center mb-10">
         <h1 className="text-4xl font-black uppercase tracking-tighter">
-          {tool.replace(/-/g, " ")}
+          Image to PDF
         </h1>
       </div>
 
-      {error && <div className="mb-6 text-center font-bold text-red-500">{error}</div>}
+      {error && (
+        <div className="mb-6 text-center font-bold text-red-500">{error}</div>
+      )}
 
-      {resultFiles.length === 0 ? (
+      {!resultFile ? (
         <div className={isProcessing ? "opacity-40 pointer-events-none" : ""}>
           <FileUploader
             key={uploaderKey}
             allowedTypes={["image/*"]}
-            onProcess={handleStartProcessing}
+            onProcess={handleProcess}
           />
 
           {isProcessing && (
@@ -78,20 +85,19 @@ export default function SingleToolPage() {
       ) : (
         <div className="glass-card p-10 rounded-[3rem] text-center">
           <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-black mb-6 uppercase tracking-tighter">Ready</h2>
+          <h2 className="text-2xl font-black mb-6 uppercase tracking-tighter">
+            PDF Ready
+          </h2>
 
           <div className="grid gap-3 max-w-md mx-auto">
-            {resultFiles.map((file, i) => (
-              <a
-                key={i}
-                href={file.url}
-                download={file.name}
-                className="flex items-center justify-between bg-slate-900 text-white px-6 py-4 rounded-2xl font-bold hover:bg-blue-600 transition-all"
-              >
-                <span className="truncate">{file.name}</span>
-                <Download className="w-4 h-4" />
-              </a>
-            ))}
+            <a
+              href={resultFile.url}
+              download={resultFile.name}
+              className="flex items-center justify-between bg-slate-900 text-white px-6 py-4 rounded-2xl font-bold hover:bg-blue-600 transition-all"
+            >
+              <span className="truncate">{resultFile.name}</span>
+              <Download className="w-4 h-4" />
+            </a>
 
             <button
               onClick={resetAll}
