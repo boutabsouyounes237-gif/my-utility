@@ -26,6 +26,12 @@ export default function SingleToolPage() {
   const [error, setError] = useState<string | null>(null);
 
   const handleStartProcessing = async (files: UploadedFile[]) => {
+    // تحقق من عدد الصور
+    if (files.length > 10) {
+      setError("You can upload a maximum of 10 images only.");
+      return;
+    }
+
     setIsProcessing(true);
     setError(null);
 
@@ -83,15 +89,12 @@ export default function SingleToolPage() {
 
   // ===================== IMAGE → PDF =====================
   const processImageToPdf = async (files: UploadedFile[]) => {
-    const MAX_FILES = 10;
-    const limitedFiles = files.slice(0, MAX_FILES);
-
     const doc = new jsPDF({ unit: "mm", format: "a4" });
 
-    for (let i = 0; i < limitedFiles.length; i++) {
-      const file = limitedFiles[i];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
 
-      // تحويل الملف إلى Data URL
+      // تحويل كل صورة إلى Data URL عبر Canvas لتجنب الصفحة السوداء
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
