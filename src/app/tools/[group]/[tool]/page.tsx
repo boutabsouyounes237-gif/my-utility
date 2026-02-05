@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Loader2,
   Image as ImageIcon,
+  ArrowLeft,
 } from "lucide-react";
 
 export default function SingleToolPage() {
@@ -24,7 +25,6 @@ export default function SingleToolPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploaderKey, setUploaderKey] = useState(0);
 
-  // بدء معالجة الملفات
   const handleStartProcessing = async (files: UploadedFile[]) => {
     setIsProcessing(true);
     try {
@@ -40,7 +40,6 @@ export default function SingleToolPage() {
     }
   };
 
-  // --- محرك تحويل WebP ---
   const processToWebp = async (files: UploadedFile[]) => {
     const processed: UploadedFile[] = [];
 
@@ -78,7 +77,6 @@ export default function SingleToolPage() {
     confetti({ particleCount: 150, spread: 70 });
   };
 
-  // --- محرك PDF ---
   const processImageToPdf = async (files: UploadedFile[]) => {
     const doc = new jsPDF();
 
@@ -107,14 +105,27 @@ export default function SingleToolPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
-      {/* زر الرجوع خطوة واحدة */}
+      {/* زر رجوع فخم */}
       <button
-  onClick={() => router.push(`/tools/${group}`)}
-  className="mb-6 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-black"
->
-  ← Back
-</button> 
-
+        onClick={() => router.push(`/tools/${group}`)}
+        className="
+          group
+          mb-8
+          inline-flex items-center gap-2
+          px-5 py-2.5
+          rounded-full
+          bg-white/10 backdrop-blur-md
+          border border-white/20
+          text-sm font-bold uppercase tracking-wide
+          text-slate-200
+          hover:bg-white/20 hover:text-white
+          transition-all duration-300
+          shadow-lg
+        "
+      >
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        Back
+      </button>
 
       <div className="text-center mb-10">
         <h1 className="text-4xl font-black uppercase tracking-tighter">
