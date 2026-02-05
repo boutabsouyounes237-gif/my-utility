@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   RefreshCw,
   Loader2,
-  Image as ImageIcon,
   ArrowLeft,
 } from "lucide-react";
 
@@ -92,6 +91,7 @@ export default function SingleToolPage() {
     for (let i = 0; i < limitedFiles.length; i++) {
       const file = limitedFiles[i];
 
+      // تحويل الملف إلى Data URL
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -114,14 +114,12 @@ export default function SingleToolPage() {
           const y = (pageHeight - imgHeight) / 2;
 
           if (i > 0) doc.addPage();
-          doc.addImage(
-            dataUrl,
-            dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG",
-            x,
-            y,
-            imgWidth,
-            imgHeight
-          );
+
+          // تحديد نوع الصورة من الامتداد
+          const ext = file.name.split(".").pop()?.toLowerCase();
+          const type = ext === "png" || ext === "webp" ? "PNG" : "JPEG";
+
+          doc.addImage(dataUrl, type, x, y, imgWidth, imgHeight);
 
           resolve();
         };
@@ -135,9 +133,7 @@ export default function SingleToolPage() {
       {
         url,
         name: "images-to-pdf.pdf",
-        data: new File([blob], "images-to-pdf.pdf", {
-          type: "application/pdf",
-        }),
+        data: new File([blob], "images-to-pdf.pdf", { type: "application/pdf" }),
       },
     ]);
 
@@ -151,7 +147,7 @@ export default function SingleToolPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
-      {/* Back */}
+      {/* زر رجوع فخم */}
       <button
         onClick={() => router.push(`/tools/${group}`)}
         className="group mb-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-bold uppercase tracking-wide text-slate-200 hover:bg-white/20 hover:text-white transition-all shadow-lg"
