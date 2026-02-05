@@ -84,45 +84,45 @@ export default function SingleToolPage() {
 
   // ===================== IMAGE → PDF =====================
   const processImageToPdf = async (files: UploadedFile[]) => {
-    const MAX_FILES = 20;
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-
-    if (files.length === 0) return;
-    if (files.length > MAX_FILES) {
-      setError("Maximum 20 images allowed.");
-      return;
-    }
-
-    for (const f of files) {
-      if (f.data.size > MAX_SIZE) {
-        setError(`"${f.name}" exceeds 10MB limit.`);
-        return;
-      }
-    }
+    const MAX_FILES = 10;
+    const limitedFiles = files.slice(0, MAX_FILES);
 
     const doc = new jsPDF({ unit: "mm", format: "a4" });
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const imgUrl = URL.createObjectURL(file.data);
+    for (let i = 0; i < limitedFiles.length; i++) {
+      const file = limitedFiles[i];
+
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file.data);
+      });
+
       const img = new Image();
-      img.src = imgUrl;
+      img.src = dataUrl;
 
       await new Promise<void>((resolve) => {
         img.onload = () => {
-          const pageW = 210;
-          const pageH = 297;
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
 
-          const ratio = Math.min(pageW / img.width, pageH / img.height);
-          const w = img.width * ratio;
-          const h = img.height * ratio;
-          const x = (pageW - w) / 2;
-          const y = (pageH - h) / 2;
+          const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
+          const imgWidth = img.width * ratio;
+          const imgHeight = img.height * ratio;
+          const x = (pageWidth - imgWidth) / 2;
+          const y = (pageHeight - imgHeight) / 2;
 
           if (i > 0) doc.addPage();
-          doc.addImage(img, "JPEG", x, y, w, h);
+          doc.addImage(
+            dataUrl,
+            dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG",
+            x,
+            y,
+            imgWidth,
+            imgHeight
+          );
 
-          URL.revokeObjectURL(imgUrl);
           resolve();
         };
       });
