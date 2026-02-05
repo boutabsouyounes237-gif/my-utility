@@ -23,11 +23,10 @@ export default function SingleToolPage() {
 
     try {
       if (tool === "image-to-pdf") {
-        const result = await processImageToPdf(files, 10); // الحد الأقصى 10 صور
+        const result = await processImageToPdf(files, 10);
         setResultFiles([result]);
         confetti({ particleCount: 120, spread: 70 });
       }
-      // يمكن إضافة أدوات أخرى هنا بنفس الطريقة
     } catch (e: any) {
       setError(e.message || "Processing failed.");
     } finally {
@@ -79,9 +78,7 @@ export default function SingleToolPage() {
       ) : (
         <div className="glass-card p-10 rounded-[3rem] text-center">
           <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-black mb-6 uppercase tracking-tighter">
-            Ready
-          </h2>
+          <h2 className="text-2xl font-black mb-6 uppercase tracking-tighter">Ready</h2>
 
           <div className="grid gap-3 max-w-md mx-auto">
             {resultFiles.map((file, i) => (

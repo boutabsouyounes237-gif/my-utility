@@ -2,10 +2,7 @@ import { UploadedFile } from "@/components/FileUploader";
 import { jsPDF } from "jspdf";
 
 /**
- * معالجة مجموعة من الصور وتحويلها إلى PDF.
- * @param files مصفوفة الصور المراد تحويلها
- * @param maxFiles الحد الأقصى لعدد الصور (default 10)
- * @returns UploadedFile مع رابط التحميل
+ * تحويل مجموعة صور إلى PDF
  */
 export async function processImageToPdf(
   files: UploadedFile[],
@@ -20,7 +17,7 @@ export async function processImageToPdf(
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
 
-    // تحويل الملف إلى Data URL
+    // تحويل الصورة إلى Data URL (Base64)
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
@@ -28,25 +25,22 @@ export async function processImageToPdf(
       reader.readAsDataURL(file.data);
     });
 
+    // إنشاء صورة مؤقتة لتحصل على أبعادها
     const img = new Image();
     img.src = dataUrl;
-
     await new Promise<void>((resolve) => {
       img.onload = () => {
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
 
-        // الحفاظ على نسبة الأبعاد
-        const ratio = Math.min(pageWidth / img.width, pageHeight / img.height);
-        const imgWidth = img.width * ratio;
-        const imgHeight = img.height * ratio;
-        const x = (pageWidth - imgWidth) / 2;
-        const y = (pageHeight - imgHeight) / 2;
+        const ratio = Math.min(pageW / img.width, pageH / img.height);
+        const w = img.width * ratio;
+        const h = img.height * ratio;
+        const x = (pageW - w) / 2;
+        const y = (pageH - h) / 2;
 
         if (i > 0) doc.addPage();
-        const ext = file.name.split(".").pop()?.toLowerCase();
-        const type = ext === "png" || ext === "webp" ? "PNG" : "JPEG";
-        doc.addImage(dataUrl, type, x, y, imgWidth, imgHeight);
+        doc.addImage(dataUrl, "JPEG", x, y, w, h);
 
         resolve();
       };
