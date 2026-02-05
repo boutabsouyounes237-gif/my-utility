@@ -24,22 +24,27 @@ export default function SingleToolPage() {
   const [resultFiles, setResultFiles] = useState<UploadedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploaderKey, setUploaderKey] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const handleStartProcessing = async (files: UploadedFile[]) => {
     setIsProcessing(true);
+    setError(null);
+
     try {
       if (tool === "image-to-pdf") {
         await processImageToPdf(files);
       } else if (tool === "webp-converter") {
         await processToWebp(files);
       }
-    } catch (error) {
-      console.error("Processing failed:", error);
+    } catch (e) {
+      console.error(e);
+      setError("Processing failed.");
     } finally {
       setIsProcessing(false);
     }
   };
 
+  // ===================== WEBP =====================
   const processToWebp = async (files: UploadedFile[]) => {
     const processed: UploadedFile[] = [];
 
@@ -47,7 +52,7 @@ export default function SingleToolPage() {
       const img = new Image();
       img.src = URL.createObjectURL(file.data);
 
-      await new Promise((resolve) => {
+      await new Promise<void>((resolve) => {
         img.onload = () => {
           const canvas = document.createElement("canvas");
           canvas.width = img.width;
@@ -60,11 +65,11 @@ export default function SingleToolPage() {
               if (blob) {
                 processed.push({
                   url: URL.createObjectURL(blob),
-                  name: file.name.split(".")[0] + ".webp",
-                  data: file.data,
+                  name: file.name.replace(/\.[^/.]+$/, ".webp"),
+                  data: new File([blob], file.name, { type: "image/webp" }),
                 });
               }
-              resolve(null);
+              resolve();
             },
             "image/webp",
             0.8
@@ -74,54 +79,82 @@ export default function SingleToolPage() {
     }
 
     setResultFiles(processed);
-    confetti({ particleCount: 150, spread: 70 });
+    confetti({ particleCount: 120, spread: 70 });
   };
 
+  // ===================== IMAGE → PDF =====================
   const processImageToPdf = async (files: UploadedFile[]) => {
-    const doc = new jsPDF();
+    const MAX_FILES = 20;
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
-    for (const file of files) {
-      const imgData = await file.data.arrayBuffer();
-      const img = new Uint8Array(imgData);
-      doc.addImage(img as any, "JPEG", 0, 0, 210, 297);
-      doc.addPage();
+    if (files.length === 0) return;
+    if (files.length > MAX_FILES) {
+      setError("Maximum 20 images allowed.");
+      return;
+    }
+
+    for (const f of files) {
+      if (f.data.size > MAX_SIZE) {
+        setError(`"${f.name}" exceeds 10MB limit.`);
+        return;
+      }
+    }
+
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const imgUrl = URL.createObjectURL(file.data);
+      const img = new Image();
+      img.src = imgUrl;
+
+      await new Promise<void>((resolve) => {
+        img.onload = () => {
+          const pageW = 210;
+          const pageH = 297;
+
+          const ratio = Math.min(pageW / img.width, pageH / img.height);
+          const w = img.width * ratio;
+          const h = img.height * ratio;
+          const x = (pageW - w) / 2;
+          const y = (pageH - h) / 2;
+
+          if (i > 0) doc.addPage();
+          doc.addImage(img, "JPEG", x, y, w, h);
+
+          URL.revokeObjectURL(imgUrl);
+          resolve();
+        };
+      });
     }
 
     const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+
     setResultFiles([
       {
-        url: URL.createObjectURL(blob),
-        name: "merged-result.pdf",
-        data: new File([blob], "merged-result.pdf"),
+        url,
+        name: "images-to-pdf.pdf",
+        data: new File([blob], "images-to-pdf.pdf", {
+          type: "application/pdf",
+        }),
       },
     ]);
-    confetti({ particleCount: 150, spread: 70 });
+
+    confetti({ particleCount: 120, spread: 70 });
   };
 
   const resetAll = () => {
     setResultFiles([]);
-    setUploaderKey((prev) => prev + 1);
+    setUploaderKey((p) => p + 1);
   };
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
-      {/* زر رجوع فخم */}
+      {/* Back */}
       <button
         onClick={() => router.push(`/tools/${group}`)}
-        className="
-          group
-          mb-8
-          inline-flex items-center gap-2
-          px-5 py-2.5
-          rounded-full
-          bg-white/10 backdrop-blur-md
-          border border-white/20
-          text-sm font-bold uppercase tracking-wide
-          text-slate-200
-          hover:bg-white/20 hover:text-white
-          transition-all duration-300
-          shadow-lg
-        "
+        className="group mb-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-bold uppercase tracking-wide text-slate-200 hover:bg-white/20 hover:text-white transition-all shadow-lg"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
         Back
@@ -132,6 +165,10 @@ export default function SingleToolPage() {
           {tool.replace(/-/g, " ")}
         </h1>
       </div>
+
+      {error && (
+        <div className="mb-6 text-center font-bold text-red-500">{error}</div>
+      )}
 
       {resultFiles.length === 0 ? (
         <div className={isProcessing ? "opacity-40 pointer-events-none" : ""}>
@@ -144,42 +181,38 @@ export default function SingleToolPage() {
           {isProcessing && (
             <div className="mt-8 flex flex-col items-center gap-3">
               <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-              <p className="font-bold text-blue-600 animate-pulse uppercase text-xs tracking-widest">
+              <p className="font-bold text-blue-600 uppercase text-xs tracking-widest">
                 Processing...
               </p>
             </div>
           )}
         </div>
       ) : (
-        <div className="glass-card p-10 rounded-[3rem] text-center animate-in zoom-in duration-500">
+        <div className="glass-card p-10 rounded-[3rem] text-center">
           <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-6" />
           <h2 className="text-2xl font-black mb-6 uppercase tracking-tighter">
-            Files Processed Successfully!
+            Ready
           </h2>
 
           <div className="grid gap-3 max-w-md mx-auto">
-            {resultFiles.map((file, idx) => (
+            {resultFiles.map((file, i) => (
               <a
-                key={idx}
+                key={i}
                 href={file.url}
                 download={file.name}
-                className="flex items-center justify-between bg-slate-900 text-white px-6 py-4 rounded-2xl font-bold hover:bg-blue-600 transition-all group"
+                className="flex items-center justify-between bg-slate-900 text-white px-6 py-4 rounded-2xl font-bold hover:bg-blue-600 transition-all"
               >
-                <div className="flex items-center gap-3">
-                  <ImageIcon className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm truncate max-w-45">
-                    {file.name}
-                  </span>
-                </div>
-                <Download className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
+                <span className="truncate">{file.name}</span>
+                <Download className="w-4 h-4" />
               </a>
             ))}
 
             <button
               onClick={resetAll}
-              className="mt-6 flex items-center justify-center gap-2 text-slate-500 font-bold hover:text-blue-600 transition-colors"
+              className="mt-6 flex items-center justify-center gap-2 text-slate-500 font-bold hover:text-blue-600"
             >
-              <RefreshCw className="w-4 h-4" /> Start New Conversion
+              <RefreshCw className="w-4 h-4" />
+              Start New Conversion
             </button>
           </div>
         </div>
