@@ -1,15 +1,7 @@
 import { PDFDocument } from "pdf-lib";
+import type { UploadedFile } from "@/types/uploaded-file";
 
-export type UploadedFile = {
-  data: File;
-  name: string;
-  type: string;
-  url?: string;
-};
-
-export async function processImageToPdf(
-  files: UploadedFile[]
-): Promise<UploadedFile> {
+export async function processImageToPdf(files: UploadedFile[]): Promise<UploadedFile> {
   const pdfDoc = await PDFDocument.create();
 
   for (const file of files) {
@@ -32,21 +24,18 @@ export async function processImageToPdf(
   }
 
   const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([new Uint8Array(pdfBytes)], {
+  type: "application/pdf",
+});
 
-  // ✅ التحويل الصحيح 100%
-  const uint8 = new Uint8Array(pdfBytes);
-  const blob = new Blob([uint8.buffer], {
-    type: "application/pdf",
-  });
-
-  const file = new File([blob], "images-to-pdf.pdf", {
-    type: "application/pdf",
-  });
+  const pdfFile = new File([blob], "images-to-pdf.pdf", { type: "application/pdf" });
 
   return {
-    data: file,
-    name: file.name,
-    type: file.type,
+    data: pdfFile,
+    file: pdfFile,
+    name: pdfFile.name,
+    size: pdfFile.size,
+    type: pdfFile.type,
     url: URL.createObjectURL(blob),
   };
 }
