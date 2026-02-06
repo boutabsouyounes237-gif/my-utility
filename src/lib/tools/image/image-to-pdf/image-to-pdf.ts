@@ -3,39 +3,50 @@ import { PDFDocument } from "pdf-lib";
 export type UploadedFile = {
   data: File;
   name: string;
+  type: string;
   url?: string;
 };
 
-export async function imagesToPdf(files: UploadedFile[]): Promise<UploadedFile> {
+export async function processImageToPdf(
+  files: UploadedFile[]
+): Promise<UploadedFile> {
   const pdfDoc = await PDFDocument.create();
 
   for (const file of files) {
-    const arrayBuffer = await file.data.arrayBuffer();
-    const imageType = file.name.endsWith(".png") ? "png" : "jpeg";
+    const bytes = await file.data.arrayBuffer();
 
-    let pdfImage;
-    if (imageType === "png") {
-      pdfImage = await pdfDoc.embedPng(arrayBuffer);
+    let image;
+    if (file.type === "image/png") {
+      image = await pdfDoc.embedPng(bytes);
     } else {
-      pdfImage = await pdfDoc.embedJpg(arrayBuffer);
+      image = await pdfDoc.embedJpg(bytes);
     }
 
-    const page = pdfDoc.addPage([pdfImage.width, pdfImage.height]);
-    page.drawImage(pdfImage, {
+    const page = pdfDoc.addPage([image.width, image.height]);
+    page.drawImage(image, {
       x: 0,
       y: 0,
-      width: pdfImage.width,
-      height: pdfImage.height,
+      width: image.width,
+      height: image.height,
     });
   }
 
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
-  const url = URL.createObjectURL(blob);
+
+  // ✅ التحويل الصحيح 100%
+  const uint8 = new Uint8Array(pdfBytes);
+  const blob = new Blob([uint8.buffer], {
+    type: "application/pdf",
+  });
+
+  const file = new File([blob], "images-to-pdf.pdf", {
+    type: "application/pdf",
+  });
 
   return {
-    data: new File([blob], "images-to-pdf.pdf", { type: "application/pdf" }),
-    name: "images-to-pdf.pdf",
-    url,
+    data: file,
+    name: file.name,
+    type: file.type,
+    url: URL.createObjectURL(blob),
   };
 }
