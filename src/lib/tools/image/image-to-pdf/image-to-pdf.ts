@@ -1,7 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import type { UploadedFile } from "@/types/uploaded-file";
 
-const MAX_IMAGES = 4;
+const MAX_IMAGES = 10;
 const MAX_WIDTH = 2000;
 
 async function normalizeImage(file: UploadedFile): Promise<ArrayBuffer> {
@@ -56,8 +56,7 @@ export async function processImageToPdf(
   }
 
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
-
+const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf", });
   const pdfFile = new File([blob], "images-to-pdf.pdf", {
     type: "application/pdf",
   });
