@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import FileUploader from "@/components/FileUploader";
 import type { UploadedFile } from "@/types/uploaded-file";
 import { processImageToPdf } from "@/lib/tools/image/image-to-pdf";
+import { IMAGE_TOOLS_REGISTRY } from "@/lib/tools/image/registry";
 // @ts-ignore
 import confetti from "canvas-confetti";
 import {
@@ -18,7 +19,10 @@ import {
 export default function ImageToPdfPage() {
   const params = useParams();
   const router = useRouter();
+
   const group = params.group as string;
+  const tool = params.tool as keyof typeof IMAGE_TOOLS_REGISTRY;
+  const toolConfig = IMAGE_TOOLS_REGISTRY[tool];
 
   const [resultFile, setResultFile] = useState<UploadedFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -30,7 +34,7 @@ export default function ImageToPdfPage() {
     setError(null);
 
     try {
-      const pdf = await processImageToPdf(files); // max 10 داخل lib
+      const pdf = await processImageToPdf(files);
       setResultFile(pdf);
       confetti({ particleCount: 120, spread: 70 });
     } catch (e: any) {
@@ -57,26 +61,41 @@ export default function ImageToPdfPage() {
       </button>
 
       <div className="text-center mb-10">
-        <h1 className="text-4xl font-black uppercase tracking-tighter">Image to PDF</h1>
+        <h1 className="text-4xl font-black uppercase tracking-tighter">
+          {toolConfig.title}
+        </h1>
+        <p className="mt-2 text-slate-500">
+          {toolConfig.description}
+        </p>
       </div>
 
-      {error && <div className="mb-6 text-center font-bold text-red-500">{error}</div>}
+      {error && (
+        <div className="mb-6 text-center font-bold text-red-500">{error}</div>
+      )}
 
       {!resultFile ? (
         <div className={isProcessing ? "opacity-40 pointer-events-none" : ""}>
-          <FileUploader key={uploaderKey} allowedTypes={["image/*"]} onProcess={handleProcess} />
+          <FileUploader
+            key={uploaderKey}
+            allowedTypes={["image/*"]}
+            onProcess={handleProcess}
+          />
 
           {isProcessing && (
             <div className="mt-8 flex flex-col items-center gap-3">
               <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-              <p className="font-bold text-blue-600 uppercase text-xs tracking-widest">Processing...</p>
+              <p className="font-bold text-blue-600 uppercase text-xs tracking-widest">
+                Processing...
+              </p>
             </div>
           )}
         </div>
       ) : (
         <div className="glass-card p-10 rounded-[3rem] text-center">
           <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-black mb-6 uppercase tracking-tighter">PDF Ready</h2>
+          <h2 className="text-2xl font-black mb-6 uppercase tracking-tighter">
+            Done
+          </h2>
 
           <div className="grid gap-3 max-w-md mx-auto">
             <a
