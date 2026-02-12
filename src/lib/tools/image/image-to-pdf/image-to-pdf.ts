@@ -8,7 +8,6 @@ async function normalizeImage(file: UploadedFile): Promise<ArrayBuffer> {
   const bitmap = await createImageBitmap(file.data);
 
   let { width, height } = bitmap;
-
   if (width > MAX_WIDTH) {
     const ratio = MAX_WIDTH / width;
     width = MAX_WIDTH;
@@ -23,19 +22,13 @@ async function normalizeImage(file: UploadedFile): Promise<ArrayBuffer> {
   ctx.drawImage(bitmap, 0, 0, width, height);
 
   const blob = await new Promise<Blob>((resolve) =>
-    canvas.toBlob(
-      (b) => resolve(b!),
-      "image/jpeg",
-      0.85
-    )
+    canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.85)
   );
 
   return blob.arrayBuffer();
 }
 
-export async function processImageToPdf(
-  files: UploadedFile[]
-): Promise<UploadedFile> {
+export async function processImageToPdf(files: UploadedFile[]): Promise<UploadedFile> {
   if (files.length > MAX_IMAGES) {
     throw new Error(`Maximum ${MAX_IMAGES} images allowed.`);
   }
@@ -45,21 +38,13 @@ export async function processImageToPdf(
   for (const file of files) {
     const bytes = await normalizeImage(file);
     const image = await pdfDoc.embedJpg(bytes);
-
     const page = pdfDoc.addPage([image.width, image.height]);
-    page.drawImage(image, {
-      x: 0,
-      y: 0,
-      width: image.width,
-      height: image.height,
-    });
+    page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
   }
 
   const pdfBytes = await pdfDoc.save();
-const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf", });
-  const pdfFile = new File([blob], "images-to-pdf.pdf", {
-    type: "application/pdf",
-  });
+  const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
+  const pdfFile = new File([blob], "images-to-pdf.pdf", { type: "application/pdf" });
 
   return {
     data: pdfFile,

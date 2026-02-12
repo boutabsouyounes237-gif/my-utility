@@ -1,122 +1,95 @@
+// src/app/tools/[group]/[tool]/page.tsx
 "use client";
 
 import React, { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import FileUploader from "@/components/FileUploader";
+import { useParams } from "next/navigation";
+import { IMAGE_TOOLS_PROCESSORS } from "@/lib/tools/registry";
 import type { UploadedFile } from "@/types/uploaded-file";
-import { processImageToPdf } from "@/lib/tools/image/image-to-pdf";
-import { IMAGE_TOOLS_REGISTRY } from "@/lib/tools/image/registry";
-// @ts-ignore
-import confetti from "canvas-confetti";
-import {
-  Download,
-  CheckCircle2,
-  RefreshCw,
-  Loader2,
-  ArrowLeft,
-} from "lucide-react";
+import FileUploader from "@/components/FileUploader";
 
-export default function ImageToPdfPage() {
+const ToolPage = () => {
   const params = useParams();
-  const router = useRouter();
+  const tool = params?.tool as string | undefined;
 
-  const group = params.group as string;
-  const tool = params.tool as keyof typeof IMAGE_TOOLS_REGISTRY;
-  const toolConfig = IMAGE_TOOLS_REGISTRY[tool];
-
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [resultFile, setResultFile] = useState<UploadedFile | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [uploaderKey, setUploaderKey] = useState(0);
 
-  const handleProcess = async (files: UploadedFile[]) => {
+  if (!tool) {
+    return <div>Tool not found</div>;
+  }
+
+  const toolProcessor =
+    IMAGE_TOOLS_PROCESSORS[
+      tool as keyof typeof IMAGE_TOOLS_PROCESSORS
+    ];
+
+  if (!toolProcessor) {
+    return <div>Tool not found</div>;
+  }
+
+  const handleProcess = async () => {
+    if (uploadedFiles.length === 0) return;
+
     setIsProcessing(true);
-    setError(null);
 
     try {
-      const pdf = await processImageToPdf(files);
-      setResultFile(pdf);
-      confetti({ particleCount: 120, spread: 70 });
-    } catch (e: any) {
-      setError(e.message || "Processing failed.");
+      const result = await toolProcessor(uploadedFiles);
+
+      const normalize = (file: any): UploadedFile => ({
+  data: file.data ?? new File([], file.name ?? "output"),
+  name: file.name ?? "output",
+  size: file.size ?? 0,
+  type: file.type ?? "application/octet-stream",
+  url: file.url,
+});
+
+if (Array.isArray(result)) {
+  setResultFile(result[0] ? normalize(result[0]) : null);
+} else if (result) {
+  setResultFile(normalize(result));
+} else {
+  setResultFile(null);
+}
+
+    } catch (err) {
+      console.error(err);
+      setResultFile(null);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const resetAll = () => {
-    setResultFile(null);
-    setUploaderKey((p) => p + 1);
-    setError(null);
-  };
-
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">{tool}</h1>
+
+      <FileUploader
+        multiple
+        onUpload={(files) => setUploadedFiles(files)}
+      />
+
       <button
-        onClick={() => router.push(`/tools/${group}`)}
-        className="group mb-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-bold uppercase tracking-wide text-slate-200 hover:bg-white/20 hover:text-white transition-all shadow-lg"
+        onClick={handleProcess}
+        disabled={isProcessing || uploadedFiles.length === 0}
+        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
       >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        Back
+        {isProcessing ? "Processing..." : "Process"}
       </button>
 
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-black uppercase tracking-tighter">
-          {toolConfig.title}
-        </h1>
-        <p className="mt-2 text-slate-500">
-          {toolConfig.description}
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-6 text-center font-bold text-red-500">{error}</div>
-      )}
-
-      {!resultFile ? (
-        <div className={isProcessing ? "opacity-40 pointer-events-none" : ""}>
-          <FileUploader
-            key={uploaderKey}
-            allowedTypes={["image/*"]}
-            onProcess={handleProcess}
-          />
-
-          {isProcessing && (
-            <div className="mt-8 flex flex-col items-center gap-3">
-              <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-              <p className="font-bold text-blue-600 uppercase text-xs tracking-widest">
-                Processing...
-              </p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="glass-card p-10 rounded-[3rem] text-center">
-          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-black mb-6 uppercase tracking-tighter">
-            Done
-          </h2>
-
-          <div className="grid gap-3 max-w-md mx-auto">
-            <a
-              href={resultFile.url}
-              download={resultFile.name}
-              className="flex items-center justify-between bg-slate-900 text-white px-6 py-4 rounded-2xl font-bold hover:bg-blue-600 transition-all"
-            >
-              <span className="truncate">{resultFile.name}</span>
-              <Download className="w-4 h-4" />
-            </a>
-
-            <button
-              onClick={resetAll}
-              className="mt-6 flex items-center justify-center gap-2 text-slate-500 font-bold hover:text-blue-600"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Start New Conversion
-            </button>
-          </div>
+      {resultFile && (
+        <div className="mt-4">
+          <a
+            href={resultFile.url}
+            download={resultFile.name}
+            className="text-blue-600 underline"
+          >
+            Download {resultFile.name}
+          </a>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default ToolPage;

@@ -1,8 +1,8 @@
 export type UploadedFile = {
-  data: File;   // الملف نفسه
-  file?: File;  // اختياري
+  data: File;
+  file?: File;
   name: string;
   size: number;
-  type: string; // إلزامي
+  type: string;
   url?: string;
 };

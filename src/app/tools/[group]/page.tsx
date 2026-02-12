@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, ImageIcon, Zap } from "lucide-react";
 
 // استيراد جميع الأدوات
-import { imageTools } from "@/lib/tools/registry";
+import { IMAGE_TOOLS_PROCESSORS } from "@/lib/tools/registry";
 
 // تعريف بيانات الأدوات الأساسية (تصنيف واسم ووصف)
 const toolsMeta: Record<string, { name: string; desc: string; cat: string }[]> = {
@@ -39,7 +39,7 @@ export default function GroupToolsPage() {
   const group = params.group as string;
 
   // الأدوات المسجلة لهذا المجموعة
-  const tools = Object.keys(imageTools).map((id, idx) => ({
+  const tools = Object.keys( IMAGE_TOOLS_PROCESSORS).map((id, idx) => ({
     id,
     ...toolsMeta[group][idx]
   }));
