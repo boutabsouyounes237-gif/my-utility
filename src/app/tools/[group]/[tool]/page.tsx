@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { useParams, useRouter } from "next/navigation"; // أضفنا useRouter للرجوع
+import { useParams, useRouter } from "next/navigation";
 import FileUploader from "@/components/FileUploader";
 import { IMAGE_TOOLS_PROCESSORS } from "@/lib/tools/registry";
 import type { UploadedFile } from "@/types/uploaded-file";
 // @ts-ignore
 import confetti from "canvas-confetti";
-import { Download, CheckCircle2, RefreshCw, Loader2, Image as ImageIcon, ChevronLeft } from "lucide-react";
+import { Download, CheckCircle2, RefreshCw, Loader2, Image as ImageIcon, ArrowLeft } from "lucide-react";
 
 export default function SingleToolPage() {
   const { tool, group } = useParams<{ tool: string; group: string }>();
@@ -25,6 +25,7 @@ export default function SingleToolPage() {
 
     try {
       const result = await processor(files);
+
       const normalizedResult: UploadedFile[] = Array.isArray(result)
         ? result.map((f: any) => ({
             data: f.data || null,
@@ -58,64 +59,75 @@ export default function SingleToolPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12 relative animate-in fade-in duration-700">
+    <div className="max-w-4xl mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
       
-      {/* زر الرجوع الاحترافي */}
+      {/* Bouton Retour Premium */}
       <button 
         onClick={() => router.back()}
-        className="group mb-8 flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold transition-all"
+        className="group mb-12 flex items-center gap-4 text-slate-400 hover:text-blue-600 transition-all"
       >
-        <div className="p-2 glass-card rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
-          <ChevronLeft className="w-5 h-5" />
+        <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-white/5 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:-translate-x-2">
+          <ArrowLeft className="w-5 h-5" />
         </div>
-        <span className="uppercase tracking-widest text-[10px]">Back to {group}</span>
+        <div className="flex flex-col items-start text-left">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Retour au</span>
+          <span className="text-sm font-bold capitalize">Studio {group}</span>
+        </div>
       </button>
 
-      <div className="text-center mb-12">
-        <h1 className="text-5xl font-black uppercase tracking-tighter mb-4 italic">
+      {/* Titre avec Style Identité Forte */}
+      <div className="text-left mb-12 border-l-8 border-blue-600 pl-8 relative">
+        <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter mb-2 italic leading-none">
           {String(tool).replace(/-/g, " ")}
         </h1>
-        <div className="h-1 w-20 bg-blue-600 mx-auto rounded-full" />
+        <p className="text-slate-500 font-bold uppercase text-xs tracking-[0.3em] opacity-60">
+          Moteur Professionnel • Traitement Local Sécurisé
+        </p>
       </div>
 
       {resultFiles.length === 0 ? (
-        <div className={isProcessing ? "opacity-40 pointer-events-none" : ""}>
+        <div className={isProcessing ? "opacity-30 pointer-events-none transition-opacity" : ""}>
           
-          {/* منطقة الرفع الزجاجية المطورة */}
-          <div className="glass-card rounded-[3.5rem] p-4 shadow-2xl border-white/40 relative">
-             <div className="absolute inset-0 bg-linear-to-tr from-blue-500/5 to-transparent pointer-events-none rounded-[3.5rem]" />
-             
-             <FileUploader 
-               key={uploaderKey} 
-               // @ts-ignore
-               multiple 
-               onUpload={handleStartProcessing} 
-             />
+          {/* Zone de Téléchargement "Solid Glass" */}
+          <div className="glass-card rounded-[3.5rem] p-10 shadow-2xl border-white/40 bg-white/40 dark:bg-slate-900/40 backdrop-blur-3xl relative overflow-hidden">
+            <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 to-transparent pointer-events-none" />
+            
+            <div className="relative z-10 text-center">
+              <p className="text-xl font-black text-slate-800 dark:text-white mb-2 uppercase tracking-tighter">
+                Glissez-déposez vos fichiers ici
+              </p>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mb-8">
+                Ou cliquez ci-dessous pour parcourir
+              </p>
+              
+              <div className="inline-block w-full">
+                <FileUploader key={uploaderKey} multiple onUpload={handleStartProcessing} />
+              </div>
+            </div>
           </div>
 
           {isProcessing && (
-            <div className="mt-12 flex flex-col items-center gap-4">
-              <div className="relative">
-                <div className="w-16 h-16 border-4 border-blue-100 rounded-full" />
-                <Loader2 className="w-16 h-16 text-blue-600 animate-spin absolute top-0 left-0 border-t-4 border-transparent rounded-full" />
+            <div className="mt-16 flex flex-col items-center gap-6">
+              <div className="p-6 bg-blue-600 rounded-4xl shadow-2xl shadow-blue-500/40">
+                <Loader2 className="w-12 h-12 text-white animate-spin" />
               </div>
-              <p className="font-black text-blue-600 animate-pulse uppercase text-xs tracking-[0.3em]">
-                Local Engine Processing...
+              <p className="font-black text-blue-600 animate-pulse uppercase text-xs tracking-[0.4em]">
+                Traitement en cours...
               </p>
             </div>
           )}
         </div>
       ) : (
-        /* واجهة النجاح الزجاجية */
-        <div className="glass-card p-12 rounded-[3.5rem] text-center animate-in zoom-in duration-500 shadow-2xl border-green-500/20">
-          <div className="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
-            <CheckCircle2 className="w-12 h-12 text-green-500" />
+        /* Interface de Succès Royale */
+        <div className="glass-card p-16 rounded-[4.5rem] text-center animate-in zoom-in duration-700 shadow-2xl border-green-500/10 bg-white/90 dark:bg-slate-900/90">
+          <div className="w-24 h-24 bg-green-500 rounded-4xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-green-500/30 rotate-6 hover:rotate-0 transition-transform duration-500">
+            <CheckCircle2 className="w-12 h-12 text-white -rotate-6 transition-transform" />
           </div>
           
-          <h2 className="text-3xl font-black mb-2 uppercase tracking-tighter">
-            Task Complete
+          <h2 className="text-4xl font-black mb-2 uppercase tracking-tighter italic">
+            Traitement Terminé
           </h2>
-          <p className="text-slate-500 font-medium mb-10 italic">Your file is processed and secured locally.</p>
+          <div className="h-1.5 w-24 bg-blue-600 mx-auto mb-12 rounded-full" />
 
           <div className="grid gap-4 max-w-sm mx-auto">
             {resultFiles.map((file, idx) => (
@@ -123,13 +135,11 @@ export default function SingleToolPage() {
                 key={idx}
                 href={file.url}
                 download={file.name}
-                className="flex items-center justify-between bg-slate-900 dark:bg-blue-600 text-white px-8 py-5 rounded-2xl font-bold hover:scale-105 transition-all shadow-xl shadow-blue-500/20 group"
+                className="flex items-center justify-between bg-slate-900 dark:bg-blue-600 text-white px-8 py-6 rounded-3xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 dark:hover:bg-slate-800 transition-all shadow-xl hover:-translate-y-1 group"
               >
                 <div className="flex items-center gap-4 text-left">
-                  <div className="p-2 bg-white/10 rounded-lg group-hover:bg-white/20">
-                    <ImageIcon className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm truncate max-w-37.5">{file.name}</span>
+                  <ImageIcon className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                  <span className="truncate max-w-40">{file.name}</span>
                 </div>
                 <Download className="w-5 h-5 animate-bounce" />
               </a>
@@ -137,9 +147,9 @@ export default function SingleToolPage() {
 
             <button
               onClick={resetAll}
-              className="mt-8 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-600 font-black uppercase text-[10px] tracking-[0.2em] transition-colors"
+              className="mt-10 text-slate-400 hover:text-blue-600 font-black uppercase text-[10px] tracking-[0.4em] transition-all flex items-center justify-center gap-4 hover:gap-6"
             >
-              <RefreshCw className="w-4 h-4" /> Reset Tool
+              <RefreshCw className="w-4 h-4" /> Nouvelle Session
             </button>
           </div>
         </div>
