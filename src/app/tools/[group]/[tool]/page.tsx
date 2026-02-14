@@ -12,8 +12,8 @@ import {
   CheckCircle2,
   RefreshCw,
   Loader2,
-  Image as ImageIcon,
-  ArrowLeft
+  ArrowLeft,
+  UploadCloud
 } from "lucide-react";
 
 export default function SingleToolPage() {
@@ -69,80 +69,88 @@ export default function SingleToolPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-12">
+    <div className="relative max-w-5xl mx-auto px-6 py-14">
 
       {/* زر رجوع احترافي */}
       <button
         onClick={() => router.back()}
-        className="mb-10 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-all group"
+        className="mb-12 flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-600 transition-all group"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        Back to Tools
+        Back
       </button>
 
-      {/* عنوان */}
-      <div className="text-center mb-12">
+      {/* العنوان */}
+      <div className="text-center mb-14">
         <h1 className="text-4xl md:text-5xl font-black tracking-tight capitalize">
           {String(tool).replace(/-/g, " ")}
         </h1>
-        <p className="text-gray-500 mt-3 text-sm">
-          Fast, secure and browser-based processing.
+        <p className="text-slate-500 mt-3 text-sm">
+          Secure • Private • Browser-Based Processing
         </p>
       </div>
 
       {resultFiles.length === 0 ? (
-        <div className="relative">
+        <>
+          {/* 🔵 Upload Zone - كيان واحد فقط */}
+          <div
+            className={`
+              relative
+              rounded-[2.5rem]
+              p-16
+              text-center
+              transition-all
+              duration-300
+              bg-linear-to-br from-blue-50/70 via-blue-100/40 to-white
+              backdrop-blur-2xl
+              border border-blue-200/60
+              shadow-[0_20px_60px_-15px_rgba(37,99,235,0.35)]
+              hover:shadow-[0_30px_80px_-15px_rgba(37,99,235,0.45)]
+              hover:scale-[1.015]
+            `}
+          >
+            {/* glow subtle */}
+            <div className="absolute inset-0 rounded-[2.5rem] bg-blue-500/5 pointer-events-none" />
 
-          {/* Glass Blue Upload Zone */}
-          <div className="
-            rounded-3xl 
-            border border-blue-200 
-            bg-linear-to-br from-blue-50/60 to-blue-100/40
-            backdrop-blur-xl
-            shadow-xl
-            p-12
-            text-center
-            transition-all
-            hover:shadow-2xl
-            hover:scale-[1.01]
-          ">
+            <div className="relative z-10 flex flex-col items-center gap-6">
 
-            <div className="mb-6">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-600/10 flex items-center justify-center">
-                <ImageIcon className="w-8 h-8 text-blue-600" />
+              <UploadCloud className="w-14 h-14 text-blue-600" />
+
+              <h2 className="text-2xl font-bold tracking-tight">
+                Drop files here
+              </h2>
+
+              <p className="text-slate-500 text-sm max-w-md">
+                Drag & drop your files or click below to upload.
+                All processing happens locally in your browser.
+              </p>
+
+              <div className="mt-4">
+                <FileUploader
+                  key={uploaderKey}
+                  multiple
+                  onUpload={handleStartProcessing}
+                />
               </div>
+
             </div>
-
-            <h2 className="text-xl font-bold mb-2">
-              Drag & Drop your files
-            </h2>
-
-            <p className="text-gray-500 text-sm mb-6">
-              or click below to browse from your device
-            </p>
-
-            <FileUploader
-              key={uploaderKey}
-              multiple
-              onUpload={handleStartProcessing}
-            />
-
           </div>
 
           {/* Loader */}
           {isProcessing && (
-            <div className="mt-10 flex flex-col items-center gap-3">
+            <div className="mt-12 flex flex-col items-center gap-4">
               <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
-              <p className="text-xs uppercase tracking-widest font-bold text-blue-600 animate-pulse">
+              <span className="text-xs font-bold tracking-widest uppercase text-blue-600 animate-pulse">
                 Processing...
-              </p>
+              </span>
             </div>
           )}
-        </div>
+        </>
       ) : (
-        <div className="bg-white rounded-3xl shadow-2xl p-12 text-center animate-in fade-in duration-500">
-          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-black mb-8 uppercase tracking-tight">
+        <div className="bg-white rounded-[2.5rem] shadow-2xl p-14 text-center animate-in fade-in duration-500">
+          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-8" />
+
+          <h2 className="text-2xl font-black mb-10 tracking-tight">
             Files Ready
           </h2>
 
@@ -163,7 +171,7 @@ export default function SingleToolPage() {
 
             <button
               onClick={resetAll}
-              className="mt-8 flex items-center justify-center gap-2 text-gray-500 font-semibold hover:text-blue-600 transition-colors"
+              className="mt-10 flex items-center justify-center gap-2 text-slate-500 font-semibold hover:text-blue-600 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Start New Conversion
