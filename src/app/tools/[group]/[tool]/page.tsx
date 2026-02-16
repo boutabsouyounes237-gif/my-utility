@@ -13,7 +13,7 @@ import {
   RefreshCw,
   Loader2,
   ArrowLeft,
-  UploadCloud
+  UploadCloud,
 } from "lucide-react";
 
 export default function SingleToolPage() {
@@ -38,19 +38,19 @@ export default function SingleToolPage() {
 
       const normalized: UploadedFile[] = Array.isArray(result)
         ? result.map((f: any) => ({
-            data: f.data || null,
-            name: f.name || "unknown",
-            size: f.size || 0,
-            type: f.type || "",
-            url: f.url || "",
+            data: f?.data ?? null,
+            name: f?.name ?? "unknown",
+            size: f?.size ?? 0,
+            type: f?.type ?? "",
+            url: f?.url ?? "",
           }))
         : [
             {
-              data: (result as any).data || null,
-              name: (result as any).name || "unknown",
-              size: (result as any).size || 0,
-              type: (result as any).type || "",
-              url: (result as any).url || "",
+              data: (result as any)?.data ?? null,
+              name: (result as any)?.name ?? "unknown",
+              size: (result as any)?.size ?? 0,
+              type: (result as any)?.type ?? "",
+              url: (result as any)?.url ?? "",
             },
           ];
 
@@ -70,8 +70,6 @@ export default function SingleToolPage() {
 
   return (
     <div className="relative max-w-5xl mx-auto px-6 py-14">
-
-      {/* زر رجوع احترافي */}
       <button
         onClick={() => router.back()}
         className="mb-12 flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-blue-600 transition-all group"
@@ -80,7 +78,6 @@ export default function SingleToolPage() {
         Back
       </button>
 
-      {/* العنوان */}
       <div className="text-center mb-14">
         <h1 className="text-4xl md:text-5xl font-black tracking-tight capitalize">
           {String(tool).replace(/-/g, " ")}
@@ -92,51 +89,40 @@ export default function SingleToolPage() {
 
       {resultFiles.length === 0 ? (
         <>
-          {/* 🔵 Upload Zone - كيان واحد فقط */}
-          <div
-            className={`
-              relative
-              rounded-[2.5rem]
-              p-16
-              text-center
-              transition-all
-              duration-300
-              bg-linear-to-br from-blue-50/70 via-blue-100/40 to-white
-              backdrop-blur-2xl
-              border border-blue-200/60
-              shadow-[0_20px_60px_-15px_rgba(37,99,235,0.35)]
-              hover:shadow-[0_30px_80px_-15px_rgba(37,99,235,0.45)]
-              hover:scale-[1.015]
-            `}
+          <FileUploader
+            key={uploaderKey}
+            multiple
+            onUpload={handleStartProcessing}
           >
-            {/* glow subtle */}
-            <div className="absolute inset-0 rounded-[2.5rem] bg-blue-500/5 pointer-events-none" />
+            <div
+              className="
+                relative
+                rounded-[2.5rem]
+                p-20
+                text-center
+                transition-all
+                duration-300
+                bg-gradient-to-br from-blue-50/80 via-blue-100/40 to-white
+                backdrop-blur-2xl
+                border border-blue-200/60
+                shadow-[0_25px_80px_-15px_rgba(37,99,235,0.45)]
+                hover:shadow-[0_35px_100px_-15px_rgba(37,99,235,0.55)]
+                hover:scale-[1.015]
+              "
+            >
+              <UploadCloud className="w-14 h-14 text-blue-600 mx-auto mb-6" />
 
-            <div className="relative z-10 flex flex-col items-center gap-6">
-
-              <UploadCloud className="w-14 h-14 text-blue-600" />
-
-              <h2 className="text-2xl font-bold tracking-tight">
+              <h2 className="text-2xl font-bold tracking-tight mb-3">
                 Drop files here
               </h2>
 
-              <p className="text-slate-500 text-sm max-w-md">
-                Drag & drop your files or click below to upload.
-                All processing happens locally in your browser.
+              <p className="text-slate-500 text-sm max-w-md mx-auto">
+                Drag & drop or click anywhere in this area to upload.
+                All processing runs locally in your browser.
               </p>
-
-              <div className="mt-4">
-                <FileUploader
-                  key={uploaderKey}
-                  multiple
-                  onUpload={handleStartProcessing}
-                />
-              </div>
-
             </div>
-          </div>
+          </FileUploader>
 
-          {/* Loader */}
           {isProcessing && (
             <div className="mt-12 flex flex-col items-center gap-4">
               <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
@@ -162,9 +148,7 @@ export default function SingleToolPage() {
                 download={file.name}
                 className="flex items-center justify-between bg-blue-600 text-white px-6 py-4 rounded-2xl font-semibold hover:bg-blue-700 transition-all group"
               >
-                <span className="truncate text-sm">
-                  {file.name}
-                </span>
+                <span className="truncate text-sm">{file.name}</span>
                 <Download className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
               </a>
             ))}
