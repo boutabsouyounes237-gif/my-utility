@@ -1,4 +1,3 @@
-// src/lib/tools/registry.ts
 import type { UploadedFile } from "@/types/uploaded-file";
 import { processImageToPdf } from "./image/image-to-pdf";
 import { processWebpConverter } from "./image/webp-converter";
@@ -22,7 +21,9 @@ import { processFilters } from "./image/filters";
 import { processMemeGen } from "./image/meme-gen";
 import { processMockupGen } from "./image/mockup-gen";
 
-export type ToolProcessor = (files: UploadedFile[]) => Promise<UploadedFile>;
+export type ToolProcessor = (
+  files: UploadedFile[]
+) => Promise<UploadedFile | UploadedFile[]>;
 
 export const IMAGE_TOOLS_PROCESSORS = {
   "image-to-pdf": processImageToPdf,
